@@ -1,0 +1,48 @@
+# Database
+*.db
+*.sqlite3
+
+# Images (too large for git)
+storage/images/*
+!storage/images/.gitkeep
+
+# Dataset (download from Kaggle, don't commit)
+data/raw/*
+data/processed/*
+data/train/*
+data/val/*
+data/test/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/train/.gitkeep
+!data/val/.gitkeep
+!data/test/.gitkeep
+
+# ML model checkpoints (too large for git)
+ml/models/*.pt
+ml/models/*.pth
+ml/models/*.h5
+ml/models/*.pkl
+!ml/models/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# Node (frontend)
+node_modules/
+dist/
+build/
+.next/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
