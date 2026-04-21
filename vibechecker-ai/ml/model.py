@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 
 # FER2013 emotion labels in the order used by the dataset
-EMOTIONS = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
+EMOTIONS = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
 NUM_CLASSES = len(EMOTIONS)
 
 # FER2013 image properties
