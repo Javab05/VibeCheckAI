@@ -7,7 +7,7 @@ Usage:
 """
 
 import os
-from models import Base, engine
+from database.models import Base, engine
 
 def init_database():
     # Create the storage directory for images
