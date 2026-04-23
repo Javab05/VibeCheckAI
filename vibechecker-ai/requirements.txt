@@ -1,2 +1,20 @@
+# Database (Role 3 — Javaya)
 sqlalchemy>=2.0
 bcrypt
+
+# Backend API (Role 1 — Zem)
+flask
+
+# Data pipeline (Role 6 — Javaya)
+numpy
+pillow
+tqdm
+
+# ML training + inference (Role 5 — Henry + Aaron)
+# On Apple Silicon these pull native arm64 wheels with MPS support automatically.
+torch>=2.0
+torchvision
+
+# CV preprocessing (Role 4 — Aaron). Uncomment when Aaron's pipeline lands.
+# mediapipe
+# opencv-python
