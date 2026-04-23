@@ -8,7 +8,7 @@ Usage:
 """
 
 import json
-from models import get_db, User, Checkin, EmotionResult, SeasonalSummary, now_iso
+from database.models import get_db, User, Checkin, EmotionResult, SeasonalSummary, now_iso
 
 
 # ═══════════════════════════════════════════════════════════

@@ -9,7 +9,7 @@ Usage:
 import json
 import random
 from datetime import datetime, timedelta
-from models import get_db, User, Checkin, EmotionResult, SeasonalSummary
+from database.models import get_db, User, Checkin, EmotionResult, SeasonalSummary
 
 # ── Emotion categories (matches FER2013) ────────────────────
 EMOTIONS = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
