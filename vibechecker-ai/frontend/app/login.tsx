@@ -22,7 +22,7 @@ const handleSubmit = async () => {
       ? { email, password }
       : { username: name, email, password };
 
-    const response = await fetch(`http://192.168.0.250:5000${endpoint}`, {
+    const response = await fetch(`http://10.220.40.175:5000${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
