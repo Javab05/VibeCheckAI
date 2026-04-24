@@ -3,8 +3,8 @@
 import json
 import random
 from datetime import datetime, timedelta
-from models import get_db, User, Checkin, EmotionResult, SeasonalSummary
-from db import get_season
+from database.models import get_db, User, Checkin, EmotionResult, SeasonalSummary
+from database.db import get_season
 
 EMOTIONS = ["angry", "fear", "happy", "neutral", "sad", "surprise"]
 

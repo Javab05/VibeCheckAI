@@ -1,48 +1,72 @@
-# Database
+# ─────────────────────────────────────────────────────────────
+# VibeCheckAI — .gitignore
+#
+# Repo layout: all code lives in vibechecker-ai/. Patterns that need to
+# match a specific directory MUST include the vibechecker-ai/ prefix
+# (a pattern with a slash in the middle is anchored to the repo root).
+# Patterns without a leading path (like *.db, __pycache__/) match anywhere.
+# ─────────────────────────────────────────────────────────────
+
+# SQLite databases (built locally by init_db.py, never committed)
 *.db
 *.sqlite3
 
-# Images (too large for git)
-storage/images/*
-!storage/images/.gitkeep
+# User-uploaded selfies (live on disk, not in git)
+# Glob inside the dir (not the dir itself) so .gitkeep can be re-included.
+vibechecker-ai/storage/images/*
+!vibechecker-ai/storage/images/.gitkeep
 
-# Dataset (download from Kaggle, don't commit)
-data/raw/*
-data/processed/*
-data/train/*
-data/val/*
-data/test/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!data/train/.gitkeep
-!data/val/.gitkeep
-!data/test/.gitkeep
+# FER2013 dataset — download from Kaggle, regenerate via prepare_fer2013.py
+vibechecker-ai/data/raw/*
+vibechecker-ai/data/processed/*
+vibechecker-ai/data/train/*
+vibechecker-ai/data/val/*
+vibechecker-ai/data/test/*
+!vibechecker-ai/data/raw/.gitkeep
+!vibechecker-ai/data/processed/.gitkeep
+!vibechecker-ai/data/train/.gitkeep
+!vibechecker-ai/data/val/.gitkeep
+!vibechecker-ai/data/test/.gitkeep
 
-# ML model checkpoints (too large for git)
-ml/models/*.pt
-ml/models/*.pth
-ml/models/*.h5
-ml/models/*.pkl
-!ml/models/.gitkeep
+# ML model checkpoints (too large for git — share via Google Drive)
+vibechecker-ai/ml/models/*.pt
+vibechecker-ai/ml/models/*.pth
+vibechecker-ai/ml/models/*.h5
+vibechecker-ai/ml/models/*.pkl
+vibechecker-ai/ml/models/*.onnx
+!vibechecker-ai/ml/models/.gitkeep
+
+# Henry's local copy of the dataset under ml/ (per-class PNGs + npz)
+vibechecker-ai/ml/data/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 .env
 venv/
 .venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Node (frontend)
 node_modules/
 dist/
 build/
 .next/
+.cache/
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo

@@ -1,7 +1,7 @@
 """Create vibechecker.db and the storage/ directory. Run once."""
 
 import os
-from models import Base, engine
+from database.models import Base, engine
 
 
 def init_database():

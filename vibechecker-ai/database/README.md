@@ -12,10 +12,14 @@ Responsible for:
 - `db.py` — Helper functions for the backend to import
 
 ## Setup
+Run from the project root (`vibechecker-ai/`) — **not** from inside `database/`,
+because the modules now import via the package-absolute path `database.models`
+so Zem's backend routes can import them cleanly.
+
 ```bash
-cd database
-python init_db.py      # Creates vibechecker.db
-python seed_db.py      # Seeds with test data
+# From vibechecker-ai/ (project root)
+python -m database.init_db      # Creates vibechecker.db + storage/images/
+python -m database.seed_db      # Seeds with fake users + check-ins
 ```
 
 ## For Backend (Zem)

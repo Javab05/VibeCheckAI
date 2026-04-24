@@ -10,7 +10,7 @@ Call .to_dict() on any object to get a JSON-safe dict for API responses.
 import json
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from models import get_db, User, Checkin, EmotionResult, SeasonalSummary, now_iso
+from database.models import get_db, User, Checkin, EmotionResult, SeasonalSummary, now_iso
 
 DEPRESSION_THRESHOLD = 0.3  # avg sadness above this triggers depression_flag = 1
 
