@@ -4,6 +4,7 @@ bcrypt
 
 # Backend API (Role 1 — Zem)
 flask
+flask-cors  # needed so Expo/React Native frontend can hit the API from a different origin
 
 # Data pipeline (Role 6 — Javaya)
 numpy
