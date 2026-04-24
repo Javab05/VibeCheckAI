@@ -4,6 +4,7 @@ bcrypt
 
 # Backend API (Role 1 — Zem)
 flask
+flask-cors  # needed so Expo/React Native frontend can hit the API from a different origin
 
 # Data pipeline (Role 6 — Javaya)
 numpy
@@ -16,5 +17,5 @@ torch>=2.0
 torchvision
 
 # CV preprocessing (Role 4 — Aaron). Uncomment when Aaron's pipeline lands.
-# mediapipe
-# opencv-python
+mediapipe
+opencv-python
