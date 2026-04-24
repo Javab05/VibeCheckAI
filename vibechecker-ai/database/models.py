@@ -1,5 +1,5 @@
 """SQLAlchemy models for VibeChecker AI."""
-
+import os
 import json
 from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, Text, Float, ForeignKey, Index
@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 Base = declarative_base()
 
-DATABASE_URL = "sqlite:///vibechecker.db"
+DATABASE_URL = "sqlite:///" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "vibechecker.db")
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 
