@@ -17,5 +17,5 @@ torch>=2.0
 torchvision
 
 # CV preprocessing (Role 4 — Aaron). Uncomment when Aaron's pipeline lands.
-# mediapipe
-# opencv-python
+mediapipe
+opencv-python
