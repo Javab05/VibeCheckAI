@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
@@ -41,15 +42,50 @@ export default function HomeScreen() {
 }, []);
 
   // ── Simulate ML scan ─────────────────────────────────────
-  const runScan = (uri: string) => {
-    setCapturedUri(uri);
-    setScanState('scanning');
-    // TODO: replace setTimeout with real API call to your ML model
-    setTimeout(() => {
-      setResult(MOCK_RESULT);
+const runScan = async (uri: string) => {
+  setCapturedUri(uri);
+  setScanState('scanning');
+
+  try {
+    // Build form data to send image + user_id
+    const formData = new FormData();
+    formData.append('image', {
+      uri: uri,
+      type: 'image/jpeg',
+      name: 'selfie.jpg',
+    } as any);
+    const userId = await AsyncStorage.getItem('user_id');
+    formData.append('user_id', userId ?? '1');
+
+    const response = await fetch('http://192.168.0.250:5000/checkin/upload', {
+      method: 'POST',
+      body: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setResult({
+        sadScore: Math.round(data.scores?.sad * 100) ?? 50,
+        level: data.emotion,
+        levelColor: COLORS.moodLow,
+        confidence: Math.round(data.confidence * 100),
+        signals: Object.entries(data.scores)
+          .sort((a, b) => (b[1] as number) - (a[1] as number))
+          .slice(0, 3)
+          .map(([emotion, score]) => `${emotion}: ${Math.round((score as number) * 100)}%`),
+      });
       setScanState('done');
-    }, 2800);
-  };
+    } else {
+      alert(data.error || 'Something went wrong');
+      setScanState('idle');
+    }
+  } catch (error) {
+    alert('Cannot connect to server. Make sure backend is running!');
+    setScanState('idle');
+  }
+};
 
   // ── Pick from gallery ─────────────────────────────────────
   const handlePickFromGallery = async () => {

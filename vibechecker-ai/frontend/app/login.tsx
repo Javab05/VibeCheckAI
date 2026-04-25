@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
@@ -14,10 +15,31 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-  const handleSubmit = () => {
-    // TODO: wire to backend auth
-    router.replace('/(tabs)/home');
-  };
+const handleSubmit = async () => {
+  try {
+    const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+    const body = mode === 'login'
+      ? { email, password }
+      : { username: name, email, password };
+
+    const response = await fetch(`http://10.220.40.175:5000${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      await AsyncStorage.setItem('user_id', String(data.user_id));
+      router.replace('/(tabs)/home');
+    } else {
+      alert(data.error || 'Something went wrong');
+    }
+  } catch (error) {
+    alert('Cannot connect to server. Make sure backend is running!');
+  }
+};
 
   return (
     <SafeAreaView style={styles.safe}>

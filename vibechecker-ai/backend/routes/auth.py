@@ -17,20 +17,19 @@ def register():
     password = data.get("password")
 
     if not username or not email or not password:
-        return jsonify({"Error": "Missing Fields"}), 400
-
+        return jsonify({"error": "Missing Fields"}), 400
 
     password_hash = bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt()
     ).decode("utf-8")
 
-    user_id = create_user(username, email, password_hash)
+    user = create_user(username, email, password_hash)
 
     return jsonify({
         "message": "User created",
-        "user_id": user_id
-        })
+        "user_id": user.user_id
+    }), 201
 
 #-----------------------
 #       LOGIN          -
@@ -44,13 +43,11 @@ def login():
     if not email or not password:
         return jsonify({"error": "Missing Fields"}), 400
     
-    #find user in DB
     user = get_user_by_email(email)
 
     if not user:
         return jsonify({"error": "User not found"}), 404
     
-    #Verify password
     is_valid = bcrypt.checkpw(
         password.encode("utf-8"),
         user.password_hash.encode("utf-8")
@@ -61,5 +58,5 @@ def login():
     
     return jsonify({
         "message": "Login Successful",
-        "user_id": user.id
+        "user_id": user.user_id
     }), 200
