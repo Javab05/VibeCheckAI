@@ -9,7 +9,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="scan" />
       </Stack>
     </GestureHandlerRootView>
   );

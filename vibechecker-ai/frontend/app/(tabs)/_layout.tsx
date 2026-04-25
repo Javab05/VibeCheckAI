@@ -26,9 +26,27 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Scan',
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'camera' : 'camera-outline'} size={26} color={color} />
+            <Ionicons
+              name={focused ? 'home' : 'home-outline'}
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'time' : 'time-outline'}
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
