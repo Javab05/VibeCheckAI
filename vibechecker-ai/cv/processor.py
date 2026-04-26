@@ -3,12 +3,20 @@ import cv2
 import numpy as np
 from PIL import Image
 from typing import Optional, Union
+from dataclasses import dataclass
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+# from mediapipe.python.solutions import drawing_utils
+# from mediapipe.python.solutions import drawing_styles
 from mediapipe.tasks.python.vision import drawing_utils
 from mediapipe.tasks.python.vision import drawing_styles
 import matplotlib.pyplot as plt
+
+@dataclass
+class FaceData:
+    face_image: Image.Image   # 48x48 grayscale PIL image
+    landmarks: np.ndarray     # shape (478, 3)
 
 def _to_rgb_numpy(image: Union[str, np.ndarray, Image.Image]) -> np.ndarray:
     """
@@ -81,6 +89,16 @@ def extract_face(image_input):
             y_min = max(0, y_min - margin_y)
             y_max = min(height, y_max + margin_y)
 
+            # Enforce square bounding box
+            box_w = x_max - x_min
+            box_h = y_max - y_min
+            max_side = max(box_w, box_h)
+            cx, cy = (x_min + x_max) // 2, (y_min + y_max) // 2
+            x_min = max(0, cx - max_side // 2)
+            y_min = max(0, cy - max_side // 2)
+            x_max = min(width, x_min + max_side)
+            y_max = min(height, y_min + max_side)
+
             # Crop the numpy array
             face_crop = rgb_numpy_array[y_min:y_max, x_min:x_max]
 
@@ -89,7 +107,9 @@ def extract_face(image_input):
             gray_img = pil_img.convert('L')
             final_img = gray_img.resize((48, 48))
 
-            return final_img
+            # Build landmark array and return FaceData
+            landmark_array = np.array([[lm.x, lm.y, lm.z] for lm in face_landmarks])
+            return FaceData(face_image=final_img, landmarks=landmark_array)
         else:
             print("No face detected.")
             return None

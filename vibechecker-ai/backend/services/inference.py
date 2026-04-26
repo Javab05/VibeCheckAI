@@ -1,16 +1,19 @@
 import sys
 import os
 
-# Add ml folder to path so we can import from it
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'ml'))
+# Add the project root to sys.path so we can use absolute imports for ml and database
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from inference import get_predictor
+from ml.inference import EmotionPredictor
 
-def run_inference(image_path: str) -> dict:
+# Instantiate the predictor once at the module level to load the model on import
+predictor = EmotionPredictor()
+
+def run_inference(image) -> dict:
     """
-    Run emotion prediction on an image file.
-    Returns a dict with emotion, confidence, scores, model_version.
+    Run emotion prediction on an image (path, array, or PIL Image).
+    Returns the prediction result dict as-is from the EmotionPredictor.
     """
-    predictor = get_predictor()
-    result = predictor.predict_from_path(image_path)
-    return result
+    return predictor.predict(image)
