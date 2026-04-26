@@ -155,6 +155,7 @@ class EmotionPredictor:
         scores = {emotion: round(float(p), 4) for emotion, p in zip(EMOTIONS, probs_np)}
 
         return {
+            "label":         pred_emotion,
             "emotion":       pred_emotion,
             "confidence":    round(confidence, 4),
             "scores":        scores,

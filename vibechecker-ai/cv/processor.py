@@ -7,6 +7,8 @@ from dataclasses import dataclass
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+# from mediapipe.python.solutions import drawing_utils
+# from mediapipe.python.solutions import drawing_styles
 from mediapipe.tasks.python.vision import drawing_utils
 from mediapipe.tasks.python.vision import drawing_styles
 import matplotlib.pyplot as plt
