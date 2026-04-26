@@ -1,3 +1,4 @@
+import { API_URL } from '../constants/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -22,7 +23,7 @@ const handleSubmit = async () => {
       ? { email, password }
       : { username: name, email, password };
 
-    const response = await fetch(`http://10.220.40.175:5000${endpoint}`, {
+const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

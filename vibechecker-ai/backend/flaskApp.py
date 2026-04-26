@@ -10,6 +10,7 @@ from routes.checkin import checkin_routes
 from routes.history import history_routes
 
 app = Flask(__name__)
+CORS(app)
 
 app.register_blueprint(auth_routes, url_prefix="/auth")
 app.register_blueprint(checkin_routes, url_prefix="/checkin")
