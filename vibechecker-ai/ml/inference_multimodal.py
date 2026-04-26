@@ -116,11 +116,17 @@ class MultiModalPredictor:
         
         # vibe_score: weighted sum of softmax probabilities
         vibe_score = float(torch.sum(probs[0] * self.vibe_weights).item())
+
+        # Full scores for backend compatibility
+        scores = {emotion: round(float(p), 4) for emotion, p in zip(self.classes, probs[0])}
         
         return {
-            "vibe_score": vibe_score,
+            "vibe_score": round(vibe_score, 2),
             "dominant_emotion": dominant_emotion,
-            "confidence": conf
+            "emotion": dominant_emotion, # compatibility
+            "confidence": conf,
+            "scores": scores,
+            "model_version": "multimodal_v1.0"
         }
 
 if __name__ == "__main__":

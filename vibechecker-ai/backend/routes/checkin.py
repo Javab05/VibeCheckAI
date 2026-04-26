@@ -42,11 +42,11 @@ def upload_checkin():
     )
 
     # Run ML model
-    result = run_inference(image_path)
-
-    # If the model couldn't find a face or had another error, return it immediately
-    if "error" in result:
-        return jsonify(result), 400
+    try:
+        result = run_inference(image_path)
+    except Exception as e:
+        # Catch inference errors (like no face detected) and return as JSON
+        return jsonify({"error": str(e)}), 400
 
     # Store result in DB
     store_emotion_result(
@@ -65,5 +65,6 @@ def upload_checkin():
         "emotion": result["emotion"],
         "confidence": result["confidence"],
         "scores": result["scores"],
-        "model_version": result["model_version"]
+        "model_version": result["model_version"],
+        "vibe_score": result.get("vibe_score")
     }), 200
