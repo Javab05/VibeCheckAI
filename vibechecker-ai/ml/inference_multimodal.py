@@ -8,13 +8,12 @@ import sys
 
 # Import components
 from ml.model_multimodal import MultiModalEmotionCNN, LANDMARK_FEATURE_SIZE
-from cv.processor import extract_face, FaceData
+from cv.processor import extract_face
 
-# Flag: cv/processor.py's extract_face returns a FaceData object (with .face_image and .landmarks) 
-# instead of a raw tuple (cropped_pil, landmarks). Implementation below handles the dataclass.
+# Implementation below handles the tuple (face_image, landmarks) return.
 
 class MultiModalPredictor:
-    def __init__(self, checkpoint_path="vibechecker-ai/ml/models/best_multimodal.pt"):
+    def __init__(self, checkpoint_path="vibechecker-ai/ml/models/multimodal_v1.0.pt"):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.classes = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
         
@@ -90,19 +89,20 @@ class MultiModalPredictor:
 
     def predict(self, image: Image.Image):
         # 1. Extract face and landmarks
-        face_data = extract_face(image)
-        if face_data is None:
+        res = extract_face(image)
+        if res is None:
             return None
+        face_image, landmarks = res
             
         # 2. Image transformation
-        # face_data.face_image is already 48x48 grayscale from processor.py
+        # face_image is already 48x48 grayscale from processor.py
         # Apply the rest of the transform: ToTensor -> Normalize
-        img_tensor = np.array(face_data.face_image.convert("L")) / 255.0
+        img_tensor = np.array(face_image.convert("L")) / 255.0
         img_tensor = (img_tensor - 0.5) / 0.5
         img_tensor = torch.tensor(img_tensor, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.device)
         
         # 3. Landmark features
-        lm_tensor = self._get_landmark_features(face_data.landmarks)
+        lm_tensor = self._get_landmark_features(landmarks)
         
         # 4. Inference
         with torch.no_grad():

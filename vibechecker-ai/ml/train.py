@@ -134,7 +134,7 @@ def main():
     base_dir = Path(__file__).parent
     data_dir = base_dir / "data" / "train"
     model_dir = base_dir / "models"
-    best_model_path = model_dir / "best_multimodal.pt"
+    best_model_path = model_dir / "multimodal_v1.0.pt"
     pretrained_path = model_dir / "emotion_model_v1.0.pt"
     
     if not data_dir.exists():
