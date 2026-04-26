@@ -37,18 +37,31 @@ def run_test():
         result = extract_face(img_input)
         
         if result:
-            print("SUCCESS")
-            print(f"Output Dimensions: {result.size[0]}x{result.size[1]}")
+            print("SUCCESS: Received FaceData object")
             
-            # Save the result so you can inspect it
-            output_path = os.path.join(current_dir, "crop_result.png")
-            result.save(output_path)
-            print(f"Result saved to: {output_path}")
-            
-            if result.size == (48, 48):
+            # Verify the type
+            from cv.processor import FaceData
+            if not isinstance(result, FaceData):
+                print(f"Warning: Result is not an instance of FaceData. Type: {type(result)}")
+
+            # Verify Image
+            print(f"Output Dimensions: {result.face_image.size[0]}x{result.face_image.size[1]}")
+            if result.face_image.size == (48, 48):
                 print("Confirmed: Correct aspect ratio and resolution.")
             else:
-                print(f"Warning: Unexpected size: {result.size}")
+                print(f"Warning: Unexpected image size: {result.face_image.size}")
+            
+            # Verify Landmarks
+            print(f"Landmarks Shape: {result.landmarks.shape}")
+            if len(result.landmarks.shape) == 2 and result.landmarks.shape[1] == 3:
+                print(f"Confirmed: Landmark array has correct format (N, 3). Count: {result.landmarks.shape[0]}")
+            else:
+                print(f"Warning: Unexpected landmark shape: {result.landmarks.shape}")
+
+            # Save the result so you can inspect it
+            output_path = os.path.join(current_dir, "crop_result.png")
+            result.face_image.save(output_path)
+            print(f"Result image saved to: {output_path}")
         else:
             print("No face detected. Try using a real photo of a face named 'test.jpg'.")
             

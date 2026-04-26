@@ -3,12 +3,18 @@ import cv2
 import numpy as np
 from PIL import Image
 from typing import Optional, Union
+from dataclasses import dataclass
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from mediapipe.tasks.python.vision import drawing_utils
 from mediapipe.tasks.python.vision import drawing_styles
 import matplotlib.pyplot as plt
+
+@dataclass
+class FaceData:
+    face_image: Image.Image   # 48x48 grayscale PIL image
+    landmarks: np.ndarray     # shape (478, 3)
 
 def _to_rgb_numpy(image: Union[str, np.ndarray, Image.Image]) -> np.ndarray:
     """
@@ -99,7 +105,9 @@ def extract_face(image_input):
             gray_img = pil_img.convert('L')
             final_img = gray_img.resize((48, 48))
 
-            return final_img
+            # Build landmark array and return FaceData
+            landmark_array = np.array([[lm.x, lm.y, lm.z] for lm in face_landmarks])
+            return FaceData(face_image=final_img, landmarks=landmark_array)
         else:
             print("No face detected.")
             return None
