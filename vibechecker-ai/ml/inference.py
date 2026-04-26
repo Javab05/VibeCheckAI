@@ -30,7 +30,9 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
-from model import EMOTIONS, IMG_SIZE, EmotionCNN, load_model
+from cv.processor import extract_face
+from ml.model import EMOTIONS, IMG_SIZE, EmotionCNN, load_model
+from typing import Union
 
 # ── Normalisation must match what was used during training ───────────────────
 _EVAL_TRANSFORM = transforms.Compose([
@@ -91,6 +93,15 @@ class EmotionPredictor:
         print(f"[EmotionPredictor] Loaded model from {model_path} on {self.device}")
 
     # ── Public API ────────────────────────────────────────────
+
+    def predict(self, image: Union[str, np.ndarray, Image.Image]) -> dict:
+        """
+        Unified prediction entrypoint: Detects face first, then classifies.
+        """
+        face = extract_face(image)
+        if face is None:
+            return {"error": "no_face_detected"}
+        return self.predict_from_pil(face)
 
     def predict_from_path(self, image_path: str) -> dict:
         """
