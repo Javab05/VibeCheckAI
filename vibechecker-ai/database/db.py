@@ -86,6 +86,39 @@ def create_checkin(user_id: int, image_path: str, captured_at: str,
         db.close()
 
 
+def set_face_features(checkin_id: int, ear: float, mar: float,
+                      brow_raise: float, mouth_angle: float) -> Checkin:
+    """Attach Aaron's CV-derived facial features to a check-in.
+
+    Pass any value as None and that column stays unchanged (e.g. if face
+    detection succeeded for some features but not others). Pass actual
+    numbers to set them.
+
+    Call this once per upload, after cv.processor has produced the
+    features and before returning the response. See `backend/routes/checkin.py`.
+    """
+    db = get_db()
+    try:
+        checkin = db.query(Checkin).filter(Checkin.checkin_id == checkin_id).first()
+        if checkin is None:
+            raise ValueError(f"Checkin {checkin_id} not found")
+
+        if ear is not None:
+            checkin.ear = ear
+        if mar is not None:
+            checkin.mar = mar
+        if brow_raise is not None:
+            checkin.brow_raise = brow_raise
+        if mouth_angle is not None:
+            checkin.mouth_angle = mouth_angle
+
+        db.commit()
+        db.refresh(checkin)
+        return checkin
+    finally:
+        db.close()
+
+
 # ── Emotion results ─────────────────────────────────────────
 
 def store_emotion_result(checkin_id: int, predicted_emotion: str,
