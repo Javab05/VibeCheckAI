@@ -98,10 +98,10 @@ class EmotionPredictor:
         """
         Unified prediction entrypoint: Detects face first, then classifies.
         """
-        face = extract_face(image)
-        if face is None:
-            return {"error": "no_face_detected"}
-        return self.predict_from_pil(face)
+        face_data = extract_face(image)
+        if face_data is None:
+            return {"error": "no_face_detected", "label": None, "confidence": None}
+        return self._predict_pil(face_data.face_image)
 
     def predict_from_path(self, image_path: str) -> dict:
         """
@@ -110,8 +110,8 @@ class EmotionPredictor:
         image_path - Path to a JPEG, PNG, or any PIL-readable image
         Returns a prediction dict (see module docstring for schema).
         """
-        img = Image.open(image_path).convert("RGB")
-        return self._predict_pil(img)
+        img = Image.open(image_path)
+        return self.predict(img)
 
     def predict_from_array(self, array: np.ndarray) -> dict:
         """
@@ -120,14 +120,8 @@ class EmotionPredictor:
         array - (H, W) grayscale or (H, W, 3) BGR/RGB uint8 array
         Returns a prediction dict.
         """
-        # OpenCV uses BGR; PIL expects RGB — convert if 3-channel
-        if array.ndim == 3 and array.shape[2] == 3:
-            img = Image.fromarray(array[:, :, ::-1])  # BGR → RGB
-        elif array.ndim == 2:
-            img = Image.fromarray(array).convert("RGB")
-        else:
-            raise ValueError(f"Unsupported array shape: {array.shape}")
-        return self._predict_pil(img)
+        img = Image.fromarray(array)
+        return self.predict(img)
 
     def predict_from_pil(self, img: Image.Image) -> dict:
         """
