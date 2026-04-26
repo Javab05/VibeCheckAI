@@ -192,10 +192,23 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, factor=0.5)
     
+    start_epoch = 0
     best_val_loss = float("inf")
+    EPOCHS = 30 # Number of ADDITIONAL epochs to run
+
+    # Resume Logic
+    if best_model_path.exists():
+        print(f"Resuming from existing checkpoint: {best_model_path}")
+        checkpoint = torch.load(best_model_path, map_location=device)
+        model.load_state_dict(checkpoint['model_state'])
+        # If the checkpoint contains epoch info, we could resume exactly from there
+        # For now, we'll just treat it as a warm start for more epochs
+        if 'epoch' in checkpoint:
+            start_epoch = checkpoint['epoch'] + 1
+            print(f"Starting from epoch {start_epoch}")
     
-    print("\nStarting Training...")
-    for epoch in range(30):
+    print(f"\nStarting Training for {EPOCHS} epochs...")
+    for epoch in range(start_epoch, start_epoch + EPOCHS):
         start_time = time.time()
         
         # Train
@@ -234,7 +247,8 @@ def main():
         scheduler.step(val_loss)
         
         elapsed = time.time() - start_time
-        print(f"Epoch {epoch+1:02d}/30 | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f} | {elapsed:.1f}s")
+        total_epochs = start_epoch + EPOCHS
+        print(f"Epoch {epoch+1:02d}/{total_epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f} | {elapsed:.1f}s")
         
         # Checkpoint
         if val_loss < best_val_loss:
