@@ -44,6 +44,10 @@ def upload_checkin():
     # Run ML model
     result = run_inference(image_path)
 
+    # If the model couldn't find a face or had another error, return it immediately
+    if "error" in result:
+        return jsonify(result), 400
+
     # Store result in DB
     store_emotion_result(
         checkin_id=checkin.checkin_id,

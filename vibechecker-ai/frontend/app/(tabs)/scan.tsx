@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   Dimensions, ActivityIndicator, Image, ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -50,11 +51,21 @@ export default function HomeScreen() {
     try {
       // Build form data to send image + user_id
       const formData = new FormData();
-      formData.append('image', {
-        uri: uri,
-        type: 'image/jpeg',
-        name: 'selfie.jpg',
-      } as any);
+
+      if (Platform.OS === 'web') {
+        // Web needs a real Blob
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        formData.append('image', blob, 'selfie.jpg');
+      } else {
+        // Native (iOS/Android) uses the URI object trick
+        formData.append('image', {
+          uri: uri,
+          type: 'image/jpeg',
+          name: 'selfie.jpg',
+        } as any);
+      }
+
       const userId = await AsyncStorage.getItem('user_id');
       formData.append('user_id', userId ?? '1');
 
