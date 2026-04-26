@@ -26,10 +26,10 @@ shape here, fix the code — don't re-edit this doc without a team discussion.
 - **Seasons:** one of `"winter"`, `"spring"`, `"summer"`, `"fall"`.
   `season_year` is the calendar year the season *ends in* — December 2025 →
   February 2026 is all `season="winter", season_year=2026`.
-- **Emotions:** the model currently emits **7 classes** —
+- **Emotions:** **7 classes** —
   `angry`, `disgust`, `fear`, `happy`, `neutral`, `sad`, `surprise`.
-  ⚠️ This conflicts with the team's prior decision to drop disgust; pending
-  resolution between Henry's training set and Javaya's `prepare_fer2013.py`.
+  Disgust is kept (team decision, Apr 2026): Henry weights it lower in the
+  vibe-score formula and Aaron's landmark mapping uses the full 7-class set.
 - **Errors:** JSON body `{"error": "human message"}` with a non-2xx status.
 
 ---
@@ -243,8 +243,6 @@ Tighten to specific origins before shipping.
 with the new response shapes — they currently encode the old assumptions.
 
 **Open questions / pending decisions:**
-- **Disgust class.** Model still emits 7 classes including `disgust`, but the prep
-  pipeline (`data/prepare_fer2013.py`) drops it. Henry to confirm direction.
 - **Landmark persistence.** `cv.processor.extract_face()` produces 478 raw
   landmarks per face but the pipeline only consumes 10 derived features and
   discards the rest. Aaron + Javaya to decide whether to add a `face_landmarks`

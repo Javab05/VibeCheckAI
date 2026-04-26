@@ -1,7 +1,9 @@
 # Data / ML Ops — Javaya
 
 FER2013 dataset preparation for VibeChecker AI.
-Disgust is dropped — we use 6 emotion classes.
+All 7 FER2013 emotion classes are kept (team decision, Apr 2026):
+the multimodal model weights disgust lower in the vibe-score formula
+and Aaron's landmark mapping uses the full label set.
 
 ## Layout
 ```
@@ -28,21 +30,20 @@ The script splits by the CSV's `Usage` column:
 - `PublicTest` → `data/val/` and `data/processed/val.npz`
 - `PrivateTest` → `data/test/` and `data/processed/test.npz`
 
-Rows labeled `disgust` in the original CSV are skipped.
-
 ## Label mapping
 | index | emotion  |
 |------:|----------|
 | 0     | angry    |
-| 1     | fear     |
-| 2     | happy    |
-| 3     | neutral  |
-| 4     | sad      |
-| 5     | surprise |
+| 1     | disgust  |
+| 2     | fear     |
+| 3     | happy    |
+| 4     | neutral  |
+| 5     | sad      |
+| 6     | surprise |
 
 Alphabetical order — matches PyTorch `ImageFolder` auto-indexing and
 `database/seed_db.py` (`EMOTIONS`). The ML model's softmax output
-should emit scores in this same order.
+emits scores in this same order.
 
 ## Formats
 
@@ -58,7 +59,7 @@ should emit scores in this same order.
   ```python
   from torchvision.datasets import ImageFolder
   train_ds = ImageFolder("data/train", transform=...)
-  # train_ds.classes == ['angry', 'fear', 'happy', 'neutral', 'sad', 'surprise']
+  # train_ds.classes == ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
   ```
 
 ### For the CV team (Aaron)

@@ -1,4 +1,8 @@
-"""Prepare FER2013 for VibeChecker AI (disgust dropped — 6 classes).
+"""Prepare FER2013 for VibeChecker AI (7 classes — disgust kept).
+
+Per team decision (Apr 2026): disgust stays in the pipeline. Henry's
+multimodal model weights it lower than the other classes for the vibe
+score, and Aaron's CV/landmark mapping uses the full 7-class label set.
 
 Reads data/raw/fer2013.csv and writes:
   - data/{train,val,test}/<emotion>/*.png   (PyTorch ImageFolder layout)
@@ -9,8 +13,9 @@ Split follows the CSV's Usage column:
     PublicTest -> val
     PrivateTest-> test
 
-Label order (matches database/seed_db.py EMOTIONS):
-    0 angry, 1 fear, 2 happy, 3 neutral, 4 sad, 5 surprise
+Label order (alphabetical, matches PyTorch ImageFolder auto-indexing
+and database/seed_db.py EMOTIONS):
+    0 angry, 1 disgust, 2 fear, 3 happy, 4 neutral, 5 sad, 6 surprise
 
 Usage:
     python data/prepare_fer2013.py                 # default paths
@@ -37,16 +42,14 @@ except ImportError:
 
 IMG_SIZE = 48
 
-# 6 classes, alphabetical (matches PyTorch ImageFolder auto-indexing)
-EMOTIONS = ["angry", "fear", "happy", "neutral", "sad", "surprise"]
+# 7 classes, alphabetical (matches PyTorch ImageFolder auto-indexing)
+EMOTIONS = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
 
-# FER2013 original labels → our new indices (disgust=1 is skipped)
+# FER2013 original labels → our new alphabetical indices.
+# (FER's order is angry/disgust/fear/happy/sad/surprise/neutral; we
+# rename to alphabetical so ImageFolder's auto class_to_idx matches.)
 _FER_NAMES = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral"]
-LABEL_REMAP = {
-    old: EMOTIONS.index(name)
-    for old, name in enumerate(_FER_NAMES)
-    if name != "disgust"
-}
+LABEL_REMAP = {old: EMOTIONS.index(name) for old, name in enumerate(_FER_NAMES)}
 
 USAGE_TO_SPLIT = {
     "Training": "train",
@@ -89,10 +92,7 @@ def prepare(input_csv: Path, data_dir: Path, export_images: bool) -> None:
 
             try:
                 old_label = int(row["emotion"])
-                new_label = LABEL_REMAP.get(old_label)
-                if new_label is None:  # disgust — skip
-                    skipped += 1
-                    continue
+                new_label = LABEL_REMAP[old_label]
                 img = parse_pixels(row["pixels"])
             except (ValueError, KeyError) as e:
                 print(f"Skipping malformed row: {e}", file=sys.stderr)
@@ -127,7 +127,7 @@ def prepare(input_csv: Path, data_dir: Path, export_images: bool) -> None:
         print(f"  {split:<6} {len(labels):>7}  " + "  ".join(f"{c:>8}" for c in counts))
 
     if skipped:
-        print(f"\n(skipped {skipped} rows — disgust samples + any malformed data)")
+        print(f"\n(skipped {skipped} malformed rows)")
 
     print()
     print(f"Wrote NumPy archives to:  {processed_dir}")

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from database.models import get_db, User, Checkin, EmotionResult, SeasonalSummary
 from database.db import get_season
 
-EMOTIONS = ["angry", "fear", "happy", "neutral", "sad", "surprise"]
+EMOTIONS = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
 
 
 def random_scores():
