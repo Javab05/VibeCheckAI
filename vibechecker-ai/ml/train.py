@@ -162,26 +162,30 @@ def main():
     model = MultiModalEmotionCNN(num_classes=7, landmark_feature_size=LANDMARK_FEATURE_SIZE).to(device)
     
     # Warm Start
-    if pretrained_path.exists():
-        print(f"Loading pretrained weights from {pretrained_path}...")
-        pretrained_state = torch.load(pretrained_path, map_location=device)
-        if "model_state_dict" in pretrained_state:
-            pretrained_state = pretrained_state["model_state_dict"]
-            
-        current_state = model.state_dict()
-        matched_layers = 0
-        skipped_layers = 0
-        
-        for name, param in pretrained_state.items():
-            # Remap to image_branch
-            new_name = "image_branch." + name
-            if new_name in current_state and current_state[new_name].shape == param.shape:
-                current_state[new_name].copy_(param)
-                matched_layers += 1
-            else:
-                skipped_layers += 1
-        model.load_state_dict(current_state)
-        print(f"Warm start complete: {matched_layers} layers matched, {skipped_layers} layers skipped.")
+    # if pretrained_path.exists():
+    #     print(f"Loading pretrained weights from {pretrained_path}...")
+    #     pretrained_state = torch.load(pretrained_path, map_location=device)
+    #     if "model_state_dict" in pretrained_state:
+    #         pretrained_state = pretrained_state["model_state_dict"]
+    #
+    #     current_state = model.state_dict()
+    #     matched_layers = 0
+    #     skipped_layers = 0
+    #
+    #     for name, param in pretrained_state.items():
+    #         # Remap to image_branch
+    #         new_name = "image_branch." + name
+    #         if new_name in current_state and current_state[new_name].shape == param.shape:
+    #             current_state[new_name].copy_(param)
+    #             matched_layers += 1
+    #         else:
+    #             skipped_layers += 1
+    #     model.load_state_dict(current_state)
+    #     print(f"Warm start complete: {matched_layers} layers matched, {skipped_layers} layers skipped.")
+
+    # Warm start skipped — pretrained model uses a different architecture
+    # (features.0.block.* keys) incompatible with MultiModalEmotionCNN image branch.
+    print("Training from scratch (no warm start — architecture mismatch with pretrained model).")
     
     # Training Config
     criterion = nn.CrossEntropyLoss()
