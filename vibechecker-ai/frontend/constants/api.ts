@@ -1,1 +1,4 @@
-export const API_URL = 'http://192.168.0.250:5000';
+import Constants from 'expo-constants';
+
+const host = Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost';
+export const API_URL = `http://${host}:5000`;

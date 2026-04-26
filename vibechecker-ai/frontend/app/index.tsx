@@ -13,19 +13,15 @@ export default function WelcomeScreen() {
       <View style={styles.blobTop} />
       <View style={styles.blobBottom} />
 
-      <SafeAreaView style={styles.safe}>
-        {/* Logo area */}
-        <View style={styles.logoArea}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoEmoji}>🌤️</Text>
-          </View>
-          <Text style={styles.appName}>VIBE CHECK</Text>
-          <Text style={styles.tagline}>Know your seasonal self</Text>
-        </View>
+<SafeAreaView style={styles.safe}>
+  {/* Logo area */}
+  <View style={styles.logoArea}>
+    <Text style={styles.appName}>VIBE CHECK</Text>
+    <Text style={styles.tagline}>Know your seasonal self</Text>
+  </View>
 
         {/* Center illustration */}
         <View style={styles.centerBlock}>
-          <Text style={styles.bigEmoji}>🧠</Text>
           <Text style={styles.headline}>AI-powered{'\n'}SAD detection</Text>
           <Text style={styles.subline}>
             Snap a selfie. Answer a few questions.{'\n'}
@@ -35,7 +31,7 @@ export default function WelcomeScreen() {
 
         {/* Pills */}
         <View style={styles.pillRow}>
-          {['📸 Face Scan', '📊 SAD Score', '📅 History'].map((p) => (
+          {[' Face Scan', ' SAD Score', ' History'].map((p) => (
             <View key={p} style={styles.pill}>
               <Text style={styles.pillText}>{p}</Text>
             </View>

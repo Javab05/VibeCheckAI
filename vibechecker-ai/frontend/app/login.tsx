@@ -1,8 +1,10 @@
 import { API_URL } from '../constants/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ScrollView, Image
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,31 +18,31 @@ export default function LoginScreen() {
   const [name, setName] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-const handleSubmit = async () => {
-  try {
-    const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-    const body = mode === 'login'
-      ? { email, password }
-      : { username: name, email, password };
+  const handleSubmit = async () => {
+    try {
+      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+      const body = mode === 'login'
+        ? { email, password }
+        : { username: name, email, password };
 
-const response = await fetch(`${API_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+  const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      await AsyncStorage.setItem('user_id', String(data.user_id));
-      router.replace('/(tabs)/home');
-    } else {
-      alert(data.error || 'Something went wrong');
+      if (response.ok) {
+        await AsyncStorage.setItem('user_id', String(data.user_id));
+        router.replace('/home');
+      } else {
+        alert(data.error || 'Something went wrong');
+      }
+    } catch (error) {
+      alert('Cannot connect to server. Make sure backend is running!');
     }
-  } catch (error) {
-    alert('Cannot connect to server. Make sure backend is running!');
-  }
-};
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -60,7 +62,6 @@ const response = await fetch(`${API_URL}${endpoint}`, {
 
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerEmoji}>🌤️</Text>
             <Text style={styles.headerTitle}>
               {mode === 'login' ? 'Welcome back' : 'Create account'}
             </Text>
@@ -253,8 +254,8 @@ const styles = StyleSheet.create({
   },
 
   socialImage: {
-  width: 20,
-  height: 20,
-  resizeMode: 'contain',
-},
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
+  },
 });

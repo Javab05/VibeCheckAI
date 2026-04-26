@@ -20,7 +20,7 @@ type CheckinEntry = {
 
 const SEASONS = ['winter', 'spring', 'summer', 'fall'];
 const SEASON_EMOJIS: Record<string, string> = {
-  winter: '❄️', spring: '🌸', summer: '☀️', fall: '🍂',
+  winter: '', spring: '', summer: '', fall: '',
 };
 
 const getEmotionColor = (emotion: string | null) => {
@@ -129,7 +129,7 @@ export default function HistoryScreen() {
               style={[styles.seasonChip, season === s && styles.seasonChipActive]}
               onPress={() => { setSeason(s); setLoading(true); }}
             >
-              <Text style={styles.seasonEmoji}>{SEASON_EMOJIS[s]}</Text>
+
               <Text style={[styles.seasonLabel, season === s && styles.seasonLabelActive]}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </Text>
@@ -170,7 +170,7 @@ export default function HistoryScreen() {
 
         {/* Entries */}
         <Text style={styles.sectionTitle}>
-          {SEASON_EMOJIS[season]} {season.charAt(0).toUpperCase() + season.slice(1)} {year}
+            {season.charAt(0).toUpperCase() + season.slice(1)} {year}
         </Text>
 
         {loading ? (
@@ -280,3 +280,4 @@ const styles = StyleSheet.create({
   entryConfidence: { fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.black },
   entryConfidenceLabel: { color: COLORS.textMuted, fontSize: FONTS.sizes.xs },
 });
+
