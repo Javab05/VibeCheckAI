@@ -81,6 +81,16 @@ def extract_face(image_input):
             y_min = max(0, y_min - margin_y)
             y_max = min(height, y_max + margin_y)
 
+            # Enforce square bounding box
+            box_w = x_max - x_min
+            box_h = y_max - y_min
+            max_side = max(box_w, box_h)
+            cx, cy = (x_min + x_max) // 2, (y_min + y_max) // 2
+            x_min = max(0, cx - max_side // 2)
+            y_min = max(0, cy - max_side // 2)
+            x_max = min(width, x_min + max_side)
+            y_max = min(height, y_min + max_side)
+
             # Crop the numpy array
             face_crop = rgb_numpy_array[y_min:y_max, x_min:x_max]
 
