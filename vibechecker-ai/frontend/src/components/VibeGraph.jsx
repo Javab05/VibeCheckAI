@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity, ScrollView, Platform } from 'react-native';
 // Removed recharts completely. Replaced with react-native-chart-kit
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../constants/api';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
+
+const CHART_HEIGHT = 220;
+const Y_AXIS_WIDTH = 45;
 
 const getVibeColor = (score) => {
   if (score > 60) return COLORS.moodGreat;
@@ -28,6 +31,7 @@ export default function VibeGraph({ scores: initialScores }) {
   const [error, setError] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summary, setSummary] = useState(null);
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
     if (!initialScores) {
@@ -36,6 +40,15 @@ export default function VibeGraph({ scores: initialScores }) {
       setScores(initialScores);
     }
   }, [initialScores]);
+
+  // Scroll to end when scores are loaded
+  useEffect(() => {
+    if (scores.length > 0 && scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current.scrollToEnd({ animated: true });
+      }, 500);
+    }
+  }, [scores]);
 
   const fetchScores = async () => {
     try {
@@ -61,13 +74,17 @@ export default function VibeGraph({ scores: initialScores }) {
         }
 
         return {
+          captured_at: item.captured_at,
           date: new Date(item.captured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           vibe_score: vibeScore,
           dominant_emotion: item.emotion || 'neutral'
         };
       });
 
-      setScores(transformedData.slice(-30));
+      // Sort by captured_at ascending to ensure chronological order
+      transformedData.sort((a, b) => new Date(a.captured_at) - new Date(b.captured_at));
+
+      setScores(transformedData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -129,14 +146,45 @@ export default function VibeGraph({ scores: initialScores }) {
     );
   }
 
+  // Calculate dynamic width: each day gets 60px of space
+  const screenWidth = Dimensions.get('window').width;
+  // Account for Y-axis and card padding
+  const availableWidth = screenWidth - (SPACING.md * 2) - Y_AXIS_WIDTH;
+  const chartWidth = Math.max(availableWidth, scores.length * 60);
+
+  const chartConfig = {
+    backgroundColor: COLORS.card,
+    backgroundGradientFrom: COLORS.card,
+    backgroundGradientTo: COLORS.card,
+    decimalPlaces: 0,
+    color: (opacity = 1) => COLORS.border,
+    labelColor: (opacity = 1) => COLORS.textSecondary,
+    style: {
+      borderRadius: RADIUS.lg
+    },
+    propsForDots: {
+      r: "5",
+      strokeWidth: "2",
+      stroke: COLORS.card
+    },
+    propsForLabels: {
+      fontSize: 10,
+      fontWeight: FONTS.weights.medium
+    },
+  };
+
   // Map data for react-native-chart-kit
   const chartData = {
-    // Only show every 5th label so the X-axis doesn't get cluttered on small screens
-    labels: scores.map((s, index) => (index % Math.ceil(scores.length / 5) === 0 ? s.date : '')),
+    labels: scores.map(s => s.date),
     datasets: [
       {
         data: scores.map(s => s.vibe_score),
         color: () => COLORS.amber,
+      },
+      {
+        data: new Array(scores.length).fill(100), // Force 0-100 range scale
+        withDots: false,
+        color: () => 'transparent',
       }
     ]
   };
@@ -146,38 +194,50 @@ export default function VibeGraph({ scores: initialScores }) {
       <Text style={styles.title}>Vibe Trend</Text>
 
       <View style={styles.chartWrapper}>
-        <LineChart
-          data={chartData}
-          width={Dimensions.get('window').width - (SPACING.md * 4)} // Dynamic width based on screen size minus padding
-          height={220}
-          yAxisInterval={1}
-          fromZero={true}
-          segments={5} // Creates lines for 0, 20, 40, 60, 80, 100
-          chartConfig={{
-            backgroundColor: COLORS.card,
-            backgroundGradientFrom: COLORS.card,
-            backgroundGradientTo: COLORS.card,
-            decimalPlaces: 0,
-            color: (opacity = 1) => COLORS.border, // Grid line colors
-            labelColor: (opacity = 1) => COLORS.textMuted,
-            style: {
-              borderRadius: RADIUS.lg
-            },
-            propsForDots: {
-              r: "4",
-              strokeWidth: "2",
-              stroke: COLORS.card
-            },
-            // Color each dot based on its value, just like your old chart
-            getDotColor: (dataPoint) => getVibeColor(dataPoint),
+        {/* Fixed Y-Axis Container */}
+        <View style={styles.yAxisContainer}>
+          <LineChart
+            data={{
+              labels: [],
+              datasets: [{ data: [0, 100], color: () => 'transparent' }]
+            }}
+            width={screenWidth} // Will be clipped by container
+            height={CHART_HEIGHT}
+            chartConfig={chartConfig}
+            fromZero
+            segments={5}
+            withDots={false}
+            withVerticalLabels={false}
+            style={styles.yAxisChart}
+          />
+        </View>
+
+        {/* Scrollable Chart Content */}
+        <ScrollView 
+          horizontal 
+          ref={scrollViewRef}
+          showsHorizontalScrollIndicator={Platform.OS === 'web'}
+          style={styles.scrollContainer}
+          contentContainerStyle={{ 
+            paddingRight: SPACING.md,
+            minWidth: '100%' 
           }}
-          bezier
-          style={{
-            marginVertical: 8,
-            borderRadius: RADIUS.lg,
-            marginLeft: -15, // Nudges the chart left so the Y-axis aligns better with the card
-          }}
-        />
+        >
+          <LineChart
+            data={chartData}
+            width={chartWidth}
+            height={CHART_HEIGHT}
+            yAxisInterval={1}
+            fromZero={true}
+            segments={5}
+            withHorizontalLabels={false}
+            chartConfig={chartConfig}
+            bezier
+            style={styles.mainChart}
+            verticalLabelRotation={30}
+            getDotColor={(dataPoint) => getVibeColor(dataPoint)}
+          />
+        </ScrollView>
       </View>
 
       <TouchableOpacity
@@ -231,9 +291,27 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   chartWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     width: '100%',
+    overflow: 'hidden',
+  },
+  yAxisContainer: {
+    width: Y_AXIS_WIDTH,
+    overflow: 'hidden',
+    zIndex: 1,
+    backgroundColor: COLORS.card,
+  },
+  yAxisChart: {
+    marginLeft: -15,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  mainChart: {
+    marginVertical: 8,
+    borderRadius: RADIUS.lg,
+    marginLeft: -10, // Slight overlap to align grid lines perfectly
   },
   title: {
     color: COLORS.textSecondary,
