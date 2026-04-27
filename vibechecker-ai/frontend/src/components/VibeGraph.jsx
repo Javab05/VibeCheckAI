@@ -63,7 +63,7 @@ export default function VibeGraph({ scores: initialScores }) {
       if (!response.ok) throw new Error('Failed to fetch history');
       
       const data = await response.json();
-      console.log('Raw History API Response:', JSON.stringify(data, null, 2));
+      // console.log('Raw History API Response:', JSON.stringify(data, null, 2));
       
       // Transform backend data to graph format
       const transformedData = data.map(item => {
@@ -84,7 +84,7 @@ export default function VibeGraph({ scores: initialScores }) {
           vibe_score: vibeScore,
           dominant_emotion: item.emotion || 'neutral'
         };
-      }).reverse(); // Oldest to newest for graph
+      }); // Oldest to newest for graph
 
       setScores(transformedData);
     } catch (err) {

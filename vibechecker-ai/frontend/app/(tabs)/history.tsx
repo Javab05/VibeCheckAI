@@ -20,9 +20,6 @@ type CheckinEntry = {
 };
 
 const SEASONS = ['winter', 'spring', 'summer', 'fall'];
-const SEASON_EMOJIS: Record<string, string> = {
-  winter: '', spring: '', summer: '', fall: '',
-};
 
 const getEmotionColor = (emotion: string | null) => {
   if (!emotion) return COLORS.textMuted;
@@ -130,7 +127,6 @@ export default function HistoryScreen() {
               style={[styles.seasonChip, season === s && styles.seasonChipActive]}
               onPress={() => { setSeason(s); setLoading(true); }}
             >
-
               <Text style={[styles.seasonLabel, season === s && styles.seasonLabelActive]}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </Text>
@@ -169,18 +165,28 @@ export default function HistoryScreen() {
           </View>
         )}
 
-        {/* Graph */}
+        {/* Vibe trend component */}
         {checkins.length > 0 && (
           <VibeGraph 
-            scores={checkins.map(c => ({
-              date: new Date(c.captured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              vibe_score: c.scores?.vibe_score ?? Math.round((1 - (c.scores?.sad ?? 0)) * 100),
-              dominant_emotion: c.emotion || 'neutral'
-            })).reverse()} 
+            scores={checkins.map(c => {
+              // Map vibe_score from scores object. 
+              let vibeScore = c.scores?.vibe_score;
+              if (vibeScore === undefined || vibeScore === null) {
+                  const happy = c.scores?.happy ?? 0;
+                  const sad = c.scores?.sad ?? 0;
+                  vibeScore = Math.round((happy - sad) * 50 + 50);
+              }
+
+              return {
+                date: new Date(c.captured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                vibe_score: vibeScore,
+                dominant_emotion: c.emotion || 'neutral'
+              };
+            })} 
           />
         )}
 
-        {/* Entries */}
+        {/* Entries Title */}
         <Text style={styles.sectionTitle}>
             {season.charAt(0).toUpperCase() + season.slice(1)} {year}
         </Text>
@@ -243,7 +249,6 @@ const styles = StyleSheet.create({
     marginRight: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
   },
   seasonChipActive: { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
-  seasonEmoji: { fontSize: 16 },
   seasonLabel: { color: COLORS.textSecondary, fontSize: FONTS.sizes.sm, fontWeight: FONTS.weights.semibold },
   seasonLabelActive: { color: COLORS.white },
 
@@ -292,4 +297,3 @@ const styles = StyleSheet.create({
   entryConfidence: { fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.black },
   entryConfidenceLabel: { color: COLORS.textMuted, fontSize: FONTS.sizes.xs },
 });
-
