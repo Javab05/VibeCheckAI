@@ -1,36 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  ReferenceLine,
-  Cell
-} from 'recharts';
+// Removed recharts completely. Replaced with react-native-chart-kit
+import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../constants/api';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
-
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <View style={styles.tooltip}>
-        <Text style={styles.tooltipDate}>{data.date}</Text>
-        <Text style={[styles.tooltipScore, { color: getVibeColor(data.vibe_score) }]}>
-          Vibe: {data.vibe_score}
-        </Text>
-        <Text style={styles.tooltipEmotion}>{data.dominant_emotion}</Text>
-      </View>
-    );
-  }
-  return null;
-};
 
 const getVibeColor = (score) => {
   if (score > 60) return COLORS.moodGreat;
@@ -73,19 +48,13 @@ export default function VibeGraph({ scores: initialScores }) {
 
       const response = await fetch(`${API_URL}/history/${userId}`);
       if (!response.ok) throw new Error('Failed to fetch history');
-      
+
       const data = await response.json();
-      // console.log('Raw History API Response:', JSON.stringify(data, null, 2));
-      
-      // Transform backend data to graph format
+
       const transformedData = data.map(item => {
-        // Map vibe_score from scores object. 
-        // Note: New data will have vibe_score inside item.scores
-        // Fallback to calculation for old data where it might be missing
         let vibeScore = item.scores?.vibe_score;
-        
+
         if (vibeScore === undefined || vibeScore === null) {
-            // Fallback: (happy - sad) * 50 + 50
             const happy = item.scores?.happy ?? 0;
             const sad = item.scores?.sad ?? 0;
             vibeScore = Math.round((happy - sad) * 50 + 50);
@@ -96,7 +65,7 @@ export default function VibeGraph({ scores: initialScores }) {
           vibe_score: vibeScore,
           dominant_emotion: item.emotion || 'neutral'
         };
-      }); // Oldest to newest for graph
+      });
 
       setScores(transformedData.slice(-30));
     } catch (err) {
@@ -106,33 +75,29 @@ export default function VibeGraph({ scores: initialScores }) {
     }
   };
 
-const fetchYearSummary = async () => {
+  const fetchYearSummary = async () => {
     setSummaryLoading(true);
     try {
       const userId = await AsyncStorage.getItem('user_id');
       if (!userId) return;
-      
+
       const currentYear = new Date().getFullYear();
       const response = await fetch(`${API_URL}/trend/${userId}?year=${currentYear}`);
-      
-      // 1. Catch the 404 (No Data)
+
       if (response.status === 404) {
         setSummary({
           trend_direction: "insufficient_data",
           trend_summary: "Not enough data for this year yet!",
           scores_analyzed: 0
         });
-        
-        return; // Exit the function successfully
+        return;
       }
 
-      // 2. Catch actual server crashes (500s)
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
-      
-      // 3. Otherwise success
+
       const data = await response.json();
       setSummary(data);
-      
+
     } catch (err) {
       console.error('Error fetching year summary:', err);
     } finally {
@@ -164,55 +129,59 @@ const fetchYearSummary = async () => {
     );
   }
 
+  // Map data for react-native-chart-kit
+  const chartData = {
+    // Only show every 5th label so the X-axis doesn't get cluttered on small screens
+    labels: scores.map((s, index) => (index % Math.ceil(scores.length / 5) === 0 ? s.date : '')),
+    datasets: [
+      {
+        data: scores.map(s => s.vibe_score),
+        color: () => COLORS.amber,
+      }
+    ]
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Vibe Trend</Text>
-      <View style={{ width: '100%', height: 220 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={scores} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} vertical={false} />
-            <XAxis 
-              dataKey="date" 
-              stroke={COLORS.textMuted} 
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis 
-              domain={[0, 100]} 
-              stroke={COLORS.textMuted} 
-              fontSize={10}
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: COLORS.border }} />
-            <ReferenceLine y={50} stroke={COLORS.textMuted} strokeDasharray="3 3" />
-            <Line
-              type="monotone"
-              dataKey="vibe_score"
-              stroke={COLORS.amber}
-              strokeWidth={3}
-              dot={(props) => {
-                const { cx, cy, payload } = props;
-                return (
-                  <circle 
-                    cx={cx} 
-                    cy={cy} 
-                    r={4} 
-                    fill={getVibeColor(payload.vibe_score)} 
-                    stroke={COLORS.card}
-                    strokeWidth={2}
-                  />
-                );
-              }}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+
+      <View style={styles.chartWrapper}>
+        <LineChart
+          data={chartData}
+          width={Dimensions.get('window').width - (SPACING.md * 4)} // Dynamic width based on screen size minus padding
+          height={220}
+          yAxisInterval={1}
+          fromZero={true}
+          segments={5} // Creates lines for 0, 20, 40, 60, 80, 100
+          chartConfig={{
+            backgroundColor: COLORS.card,
+            backgroundGradientFrom: COLORS.card,
+            backgroundGradientTo: COLORS.card,
+            decimalPlaces: 0,
+            color: (opacity = 1) => COLORS.border, // Grid line colors
+            labelColor: (opacity = 1) => COLORS.textMuted,
+            style: {
+              borderRadius: RADIUS.lg
+            },
+            propsForDots: {
+              r: "4",
+              strokeWidth: "2",
+              stroke: COLORS.card
+            },
+            // Color each dot based on its value, just like your old chart
+            getDotColor: (dataPoint) => getVibeColor(dataPoint),
+          }}
+          bezier
+          style={{
+            marginVertical: 8,
+            borderRadius: RADIUS.lg,
+            marginLeft: -15, // Nudges the chart left so the Y-axis aligns better with the card
+          }}
+        />
       </View>
 
-      <TouchableOpacity 
-        style={styles.summaryButton} 
+      <TouchableOpacity
+        style={styles.summaryButton}
         onPress={fetchYearSummary}
         disabled={summaryLoading}
         activeOpacity={0.7}
@@ -233,10 +202,10 @@ const fetchYearSummary = async () => {
             <Text style={styles.summaryTitle}>Annual Outlook</Text>
             {summary.trend_direction !== 'insufficient_data' && (
               <View style={[
-                styles.badge, 
-                { 
-                  backgroundColor: getTrendColor(summary.trend_direction) + '20', 
-                  borderColor: getTrendColor(summary.trend_direction) 
+                styles.badge,
+                {
+                  backgroundColor: getTrendColor(summary.trend_direction) + '20',
+                  borderColor: getTrendColor(summary.trend_direction)
                 }
               ]}>
                 <Text style={[styles.badgeText, { color: getTrendColor(summary.trend_direction) }]}>
@@ -261,6 +230,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
+  chartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
   title: {
     color: COLORS.textSecondary,
     fontSize: FONTS.sizes.xs,
@@ -278,27 +252,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-  },
-  tooltip: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.sm,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  tooltipDate: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    marginBottom: 2,
-  },
-  tooltipScore: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-  },
-  tooltipEmotion: {
-    color: COLORS.textSecondary,
-    fontSize: 10,
-    textTransform: 'capitalize',
   },
   errorText: {
     color: COLORS.error,
