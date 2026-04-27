@@ -59,6 +59,16 @@ class Checkin(Base):
     season_year = Column(Integer, nullable=False)
     created_at = Column(Text, default=now_iso)
 
+    # ── Facial features (Aaron — Role 4 / CV) ───────────────
+    # Derived from MediaPipe landmarks at upload time. All nullable: a row
+    # may exist before features are computed, or face detection may fail.
+    # These describe the photo, not the prediction, so they live on Checkin
+    # (not EmotionResult) and don't get duplicated when the model is re-run.
+    ear = Column(Float)            # eye aspect ratio (avg of left + right)
+    mar = Column(Float)            # mouth aspect ratio
+    brow_raise = Column(Float)     # brow raise distance (avg of left + right)
+    mouth_angle = Column(Float)    # corner-of-mouth angle (degrees)
+
     user = relationship("User", back_populates="checkins")
 
     # All predictions ever made for this check-in (newest first).
@@ -85,6 +95,10 @@ class Checkin(Base):
             "season": self.season,
             "season_year": self.season_year,
             "created_at": self.created_at,
+            "ear": self.ear,
+            "mar": self.mar,
+            "brow_raise": self.brow_raise,
+            "mouth_angle": self.mouth_angle,
         }
 
     def __repr__(self):
