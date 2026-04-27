@@ -98,7 +98,7 @@ export default function VibeGraph({ scores: initialScores }) {
         };
       }); // Oldest to newest for graph
 
-      setScores(transformedData);
+      setScores(transformedData.slice(-30));
     } catch (err) {
       setError(err.message);
     } finally {
