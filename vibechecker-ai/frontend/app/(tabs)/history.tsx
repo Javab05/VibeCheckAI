@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../constants/api';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
+import VibeGraph from '../../src/components/VibeGraph';
 
 type CheckinEntry = {
   checkin_id: number;
@@ -166,6 +167,17 @@ export default function HistoryScreen() {
               High sadness detected this {season}. Consider speaking with a professional.
             </Text>
           </View>
+        )}
+
+        {/* Graph */}
+        {checkins.length > 0 && (
+          <VibeGraph 
+            scores={checkins.map(c => ({
+              date: new Date(c.captured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              vibe_score: c.scores?.vibe_score ?? Math.round((1 - (c.scores?.sad ?? 0)) * 100),
+              dominant_emotion: c.emotion || 'neutral'
+            })).reverse()} 
+          />
         )}
 
         {/* Entries */}
