@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
+import VibeGraph from '../../src/components/VibeGraph';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - SPACING.xl * 2;
@@ -11,57 +12,62 @@ const CARD_WIDTH = width - SPACING.xl * 2;
 export default function DashboardScreen() {
     return (
         <SafeAreaView style={styles.safe}>
-            <View style={styles.header}>
-                <Text style={styles.sectionLabel}>Dashboard</Text>
-                <Text style={styles.title}>Your mood hub</Text>
-                <Text style={styles.subtitle}>
-                    Choose the next action and keep your seasonal check-ins on track.
-                </Text>
-            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+                <View style={styles.header}>
+                    <Text style={styles.sectionLabel}>Dashboard</Text>
+                    <Text style={styles.title}>Your mood hub</Text>
+                    <Text style={styles.subtitle}>
+                        Choose the next action and keep your seasonal check-ins on track.
+                    </Text>
+                </View>
 
-            <View style={styles.body}>
-                <TouchableOpacity
-                    activeOpacity={0.88}
-                    style={styles.card}
-                    onPress={() => router.navigate('/scan')}
-                >
-                    <LinearGradient
-                        colors={[COLORS.amber, COLORS.coral]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.cardIcon}
+                <View style={styles.body}>
+                    <VibeGraph />
+
+                    <TouchableOpacity
+                        activeOpacity={0.88}
+                        style={styles.card}
+                        onPress={() => router.navigate('/scan')}
                     >
-                        <Ionicons name="camera" size={24} color={COLORS.white} />
-                    </LinearGradient>
-                    <Text style={styles.cardTitle}>Daily Check-in</Text>
-                    <Text style={styles.cardText}>Snap a selfie and get a quick mood evaluation.</Text>
-                </TouchableOpacity>
+                        <LinearGradient
+                            colors={[COLORS.amber, COLORS.coral]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.cardIcon}
+                        >
+                            <Ionicons name="camera" size={24} color={COLORS.white} />
+                        </LinearGradient>
+                        <Text style={styles.cardTitle}>Daily Check-in</Text>
+                        <Text style={styles.cardText}>Snap a selfie and get a quick mood evaluation.</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    activeOpacity={0.88}
-                    style={styles.card}
-                    onPress={() => router.navigate('/history')}
-                >
-                    <View style={[styles.cardIcon, styles.cardIconSecondary]}>
-                        <Ionicons name="time" size={24} color={COLORS.white} />
-                    </View>
-                    <Text style={styles.cardTitle}>Mood History</Text>
-                    <Text style={styles.cardText}>Review past scans and seasonal progress.</Text>
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity
+                        activeOpacity={0.88}
+                        style={styles.card}
+                        onPress={() => router.navigate('/history')}
+                    >
+                        <View style={[styles.cardIcon, styles.cardIconSecondary]}>
+                            <Ionicons name="time" size={24} color={COLORS.white} />
+                        </View>
+                        <Text style={styles.cardTitle}>Mood History</Text>
+                        <Text style={styles.cardText}>Review past scans and seasonal progress.</Text>
+                    </TouchableOpacity>
+                </View>
 
-            <View style={styles.footer}>
-                <Text style={styles.footerTitle}>Tip</Text>
-                <Text style={styles.footerText}>
-                    Regular check-ins help the app learn your seasonal mood patterns faster.
-                </Text>
-            </View>
+                <View style={styles.footer}>
+                    <Text style={styles.footerTitle}>Tip</Text>
+                    <Text style={styles.footerText}>
+                        Regular check-ins help the app learn your seasonal mood patterns faster.
+                    </Text>
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    safe: { flex: 1, backgroundColor: COLORS.background, paddingHorizontal: SPACING.xl },
+    safe: { flex: 1, backgroundColor: COLORS.background },
+    scroll: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING['2xl'] },
     header: { paddingTop: SPACING['2xl'], paddingBottom: SPACING.lg },
     sectionLabel: {
         color: COLORS.amber, fontSize: FONTS.sizes.xs,

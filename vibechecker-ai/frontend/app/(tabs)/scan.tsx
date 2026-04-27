@@ -17,23 +17,16 @@ const PREVIEW_SIZE = width * 0.78;
 
 type ScanState = 'idle' | 'scanning' | 'done';
 
-// Placeholder — swap this with your real ML model output later
-const MOCK_RESULT = {
-  sadScore: 62,
-  level: 'Moderate',
-  levelColor: COLORS.moodLow,
-  confidence: 87,
-  signals: [
-    'Low energy expression detected',
-    'Reduced eye engagement',
-    'Facial tension detected',
-  ],
+type InferenceResult = {
+  vibe_score: number;
+  dominant_emotion: string;
+  confidence: number;
 };
 
 export default function HomeScreen() {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
-  const [result, setResult] = useState<typeof MOCK_RESULT | null>(null);
+  const [result, setResult] = useState<InferenceResult | null>(null);
 
   useEffect(() => {
     const requestPermissions = async () => {
@@ -43,22 +36,36 @@ export default function HomeScreen() {
     requestPermissions();
   }, []);
 
-  // ── Simulate ML scan ─────────────────────────────────────
+  // ── Helper: Get vibe level label based on score ───────────
+  const getVibeLevel = (score: number) => {
+    if (score >= 80) return 'GREAT';
+    if (score >= 60) return 'GOOD';
+    if (score >= 40) return 'OKAY';
+    if (score >= 20) return 'LOW';
+    return 'DOWN';
+  };
+
+  // ── Run ML scan ───────────────────────────────────────────
   const runScan = async (uri: string) => {
+    const userId = await AsyncStorage.getItem('user_id');
+    
+    if (!userId) {
+      alert('Please log in first to save your vibe check!');
+      return;
+    }
+
     setCapturedUri(uri);
     setScanState('scanning');
 
     try {
-      // Build form data to send image + user_id
       const formData = new FormData();
+      formData.append('user_id', userId);
 
       if (Platform.OS === 'web') {
-        // Web needs a real Blob
         const response = await fetch(uri);
         const blob = await response.blob();
         formData.append('image', blob, 'selfie.jpg');
       } else {
-        // Native (iOS/Android) uses the URI object trick
         formData.append('image', {
           uri: uri,
           type: 'image/jpeg',
@@ -66,10 +73,7 @@ export default function HomeScreen() {
         } as any);
       }
 
-      const userId = await AsyncStorage.getItem('user_id');
-      formData.append('user_id', userId ?? '1');
-
-      const response = await fetch(`${API_URL}/checkin/upload`, {
+      const response = await fetch(`${API_URL}/inference`, {
         method: 'POST',
         body: formData,
       });
@@ -78,14 +82,9 @@ export default function HomeScreen() {
 
       if (response.ok) {
         setResult({
-          sadScore: Math.round(data.scores?.sad * 100) ?? 50,
-          level: data.emotion,
-          levelColor: COLORS.moodLow,
+          vibe_score: data.vibe_score,
+          dominant_emotion: data.dominant_emotion,
           confidence: Math.round(data.confidence * 100),
-          signals: Object.entries(data.scores)
-            .sort((a, b) => (b[1] as number) - (a[1] as number))
-            .slice(0, 3)
-            .map(([emotion, score]) => `${emotion}: ${Math.round((score as number) * 100)}%`),
         });
         setScanState('done');
       } else {
@@ -130,13 +129,23 @@ export default function HomeScreen() {
     setResult(null);
   };
 
+  // ── Helper: Get color based on score ────────────────────────
+  const getVibeColor = (score: number) => {
+    if (score >= 70) return COLORS.moodGreat;
+    if (score >= 40) return COLORS.moodOkay;
+    return COLORS.moodDown;
+  };
+
   // ── Result view ───────────────────────────────────────────
   if (scanState === 'done' && result) {
+    const scoreColor = getVibeColor(result.vibe_score);
+    const vibeLevel = getVibeLevel(result.vibe_score);
+
     return (
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.resultScroll} showsVerticalScrollIndicator={false}>
 
-          <Text style={styles.resultHeader}>Scan Complete ✓</Text>
+          <Text style={styles.resultHeader}>Vibe Check Result ✓</Text>
 
           {/* Photo preview */}
           {capturedUri && (
@@ -150,27 +159,29 @@ export default function HomeScreen() {
 
           {/* Score ring */}
           <View style={styles.scoreBlock}>
-            <View style={styles.scoreRingOuter}>
-              <View style={styles.scoreRingInner}>
-                <Text style={styles.scoreNum}>{result.sadScore}</Text>
+            <View style={[styles.scoreRingOuter, { borderColor: scoreColor + '55' }]}>
+              <View style={[styles.scoreRingInner, { borderColor: scoreColor }]}>
+                <Text style={styles.scoreNum}>{Math.round(result.vibe_score)}</Text>
                 <Text style={styles.scoreMax}>/100</Text>
               </View>
             </View>
-            <Text style={[styles.scoreLevel, { color: result.levelColor }]}>
-              {result.level} SAD Risk
+            <Text style={[styles.scoreLevel, {color: scoreColor}]}>
+              {vibeLevel}
             </Text>
             <Text style={styles.scoreConf}>Model confidence: {result.confidence}%</Text>
-          </View>
 
-          {/* Signals */}
-          <View style={styles.signalsBox}>
-            <Text style={styles.signalsTitle}>DETECTED SIGNALS</Text>
-            {result.signals.map((s, i) => (
-              <View key={i} style={styles.signalRow}>
-                <View style={[styles.signalDot, { backgroundColor: result.levelColor }]} />
-                <Text style={styles.signalText}>{s}</Text>
-              </View>
-            ))}
+            {/* Visual Indicator - Bar */}
+            <View style={styles.barContainer}>
+              <View 
+                style={[
+                  styles.barFill, 
+                  { 
+                    width: `${result.vibe_score}%`, 
+                    backgroundColor: scoreColor 
+                  }
+                ]} 
+              />
+            </View>
           </View>
 
           {/* Disclaimer */}
@@ -402,6 +413,21 @@ const styles = StyleSheet.create({
   scoreMax: { color: COLORS.textMuted, fontSize: FONTS.sizes.xs },
   scoreLevel: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.bold, marginBottom: 4 },
   scoreConf: { color: COLORS.textMuted, fontSize: FONTS.sizes.sm },
+
+  barContainer: {
+    width: '100%',
+    height: 12,
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.full,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: SPACING.lg,
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: RADIUS.full,
+  },
 
   signalsBox: {
     backgroundColor: COLORS.card, borderRadius: RADIUS.xl,
