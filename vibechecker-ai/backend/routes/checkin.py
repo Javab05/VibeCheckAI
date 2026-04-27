@@ -49,11 +49,15 @@ def upload_checkin():
         return jsonify({"error": str(e)}), 400
 
     # Store result in DB
+    scores = result["scores"]
+    if "vibe_score" in result:
+        scores["vibe_score"] = result["vibe_score"]
+
     store_emotion_result(
         checkin_id=checkin.checkin_id,
         predicted_emotion=result["emotion"],
         confidence=result["confidence"],
-        scores=result["scores"],
+        scores=scores,
         model_version=result["model_version"],
     )
 

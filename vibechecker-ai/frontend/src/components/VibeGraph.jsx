@@ -63,14 +63,28 @@ export default function VibeGraph({ scores: initialScores }) {
       if (!response.ok) throw new Error('Failed to fetch history');
       
       const data = await response.json();
+      console.log('Raw History API Response:', JSON.stringify(data, null, 2));
       
       // Transform backend data to graph format
-      // Note: Backend 'scores' might be an object, user wants vibe_score
-      const transformedData = data.map(item => ({
-        date: new Date(item.captured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        vibe_score: item.scores?.vibe_score ?? Math.round((1 - (item.scores?.sad ?? 0)) * 100),
-        dominant_emotion: item.emotion || 'neutral'
-      })).reverse(); // Oldest to newest for graph
+      const transformedData = data.map(item => {
+        // Map vibe_score from scores object. 
+        // Note: New data will have vibe_score inside item.scores
+        // Fallback to calculation for old data where it might be missing
+        let vibeScore = item.scores?.vibe_score;
+        
+        if (vibeScore === undefined || vibeScore === null) {
+            // Fallback: (happy - sad) * 50 + 50
+            const happy = item.scores?.happy ?? 0;
+            const sad = item.scores?.sad ?? 0;
+            vibeScore = Math.round((happy - sad) * 50 + 50);
+        }
+
+        return {
+          date: new Date(item.captured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          vibe_score: vibeScore,
+          dominant_emotion: item.emotion || 'neutral'
+        };
+      }).reverse(); // Oldest to newest for graph
 
       setScores(transformedData);
     } catch (err) {
