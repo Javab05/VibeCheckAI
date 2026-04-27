@@ -18,9 +18,9 @@ class MultiModalPredictor:
         self.classes = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
         
         # Adjusted Vibe score weights (less harsh, neutral is more positive)
-        # happy=100, surprise=80, neutral=65, fear=45, sad=35, angry=30, disgust=20
+        # happy=100, surprise=75, neutral=70, fear=45, sad=35, angry=30, disgust=20
         # Order: ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
-        self.vibe_weights = torch.tensor([30, 20, 45, 100, 65, 35, 80], dtype=torch.float32).to(self.device)
+        self.vibe_weights = torch.tensor([30, 20, 45, 100, 70, 35, 75], dtype=torch.float32).to(self.device)
         
         # Initialize model
         self.model = MultiModalEmotionCNN(num_classes=7, landmark_feature_size=LANDMARK_FEATURE_SIZE).to(self.device)
@@ -117,25 +117,20 @@ class MultiModalPredictor:
             
         # 5. Results computation
         conf, idx = torch.max(probs, 1)
-        conf_val = float(conf.item())
+        conf = round(float(conf.item()), 4)
         dominant_emotion = self.classes[idx.item()]
-        
-        # Apply probability sharpening (power scaling with T=2)
-        # This amplifies the dominant emotion and suppresses low-confidence noise
-        sharpened_probs = torch.pow(probs[0], 2.0)
-        sharpened_probs = sharpened_probs / torch.sum(sharpened_probs)
-        
-        # vibe_score: weighted sum of sharpened probabilities
-        vibe_score = float(torch.sum(sharpened_probs * self.vibe_weights).item())
+
+        # vibe_score: weighted sum of softmax probabilities
+        vibe_score = float(torch.sum(probs[0] * self.vibe_weights).item())
 
         # Full scores for backend compatibility
         scores = {emotion: round(float(p), 4) for emotion, p in zip(self.classes, probs[0])}
-        
+
         result = {
             "vibe_score": round(vibe_score, 2),
             "dominant_emotion": dominant_emotion,
             "emotion": dominant_emotion, # compatibility
-            "confidence": round(conf_val, 4),
+            "confidence": conf,
             "scores": scores,
             "model_version": "multimodal_v1.0"
         }
