@@ -2,7 +2,13 @@ import os
 import uuid
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
-from database.db import create_checkin, store_emotion_result, get_season, update_seasonal_summary
+from database.db import (
+    create_checkin,
+    store_emotion_result,
+    set_face_features,
+    get_season,
+    update_seasonal_summary,
+)
 from services.inference import run_inference
 
 checkin_routes = Blueprint("checkin", __name__)
@@ -59,6 +65,17 @@ def upload_checkin():
         confidence=result["confidence"],
         scores=scores,
         model_version=result["model_version"],
+    )
+
+    # Persist Aaron's CV-derived facial features (if the inference dict
+    # exposes them — keys are absent until ml/inference_multimodal.py is
+    # updated to surface them, in which case this is a no-op).
+    set_face_features(
+        checkin_id=checkin.checkin_id,
+        ear=result.get("ear"),
+        mar=result.get("mar"),
+        brow_raise=result.get("brow_raise"),
+        mouth_angle=result.get("mouth_angle"),
     )
 
     # Update seasonal summary

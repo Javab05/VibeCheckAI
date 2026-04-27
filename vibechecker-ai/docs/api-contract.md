@@ -164,6 +164,8 @@ Empty list `[]` if the user has no check-ins for that season.
 
 > ⚠️ The shape was historically nested under `latest_result` (matching `Checkin.to_dict()` + `EmotionResult.to_dict()`). The current implementation flattens for frontend convenience. If anyone adds new fields, mirror them at the top level — don't reintroduce the wrapper without coordinating with Carlo.
 
+> Once Aaron's CV features wire in, `history.py` should also include `ear`, `mar`, `brow_raise`, `mouth_angle` on each row (they live on `Checkin`, so they're available without a join). The columns exist in the DB now but the route still hand-picks fields — Zem to update when the upload pipeline starts populating them.
+
 ---
 
 ### `GET /history/<user_id>/trend?season=<season>&season_year=<year>` *(proposed — not yet routed)*
@@ -243,12 +245,15 @@ Tighten to specific origins before shipping.
 with the new response shapes — they currently encode the old assumptions.
 
 **Open questions / pending decisions:**
-- **Landmark persistence.** `cv.processor.extract_face()` produces 478 raw
-  landmarks per face but the pipeline only consumes 10 derived features and
-  discards the rest. Aaron + Javaya to decide whether to add a `face_landmarks`
-  table for re-analysis purposes.
 - **Email-collision register.** `/auth/register` doesn't yet return 409 on
   duplicate emails — it raises a 500 from the unique-constraint violation.
+
+**Recently resolved:**
+- ✅ **Disgust class kept** (Apr 2026) — full 7-class output.
+- ✅ **Landmark persistence** (Apr 2026) — Aaron opted to store 4 derived
+  features (`ear`, `mar`, `brow_raise`, `mouth_angle`) on each `Checkin`
+  rather than the 478 raw landmarks. Schema columns + `set_face_features()`
+  helper landed; CV→backend wiring pending Aaron + Zem.
 
 ---
 
