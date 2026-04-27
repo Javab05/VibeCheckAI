@@ -65,17 +65,26 @@ def analyze_trend(user_id: int, db: Session, year: int = None) -> dict:
         except Exception:
             date_str = str(r.processed_at)
         
-        # Try to get vibe_score from scores_json if available, otherwise use confidence * 100
+        # Try to get vibe_score from scores_json if available, otherwise calculate from weighted scores
         vibe_score = 0
         if r.scores_json:
             try:
                 scores = json.loads(r.scores_json)
-                # If vibe_score was somehow tucked into scores (though unlikely based on current code)
-                vibe_score = scores.get("vibe_score", 0)
-                if not vibe_score:
-                    # Calculate a simple vibe score if not present: happy - sad
-                    # This is just a heuristic since the real vibe_score isn't persisted
-                    vibe_score = (scores.get("happy", 0) - scores.get("sad", 0)) * 50 + 50
+                # If vibe_score was explicitly saved, use it
+                vibe_score = scores.get("vibe_score")
+                
+                if vibe_score is None:
+                    # Comprehensive weighted vibe score:
+                    # happy:100, surprise:70, neutral:50, fear:30, sad:20, angry:10, disgust:5
+                    vibe_score = (
+                        (scores.get("happy", 0) * 100) +
+                        (scores.get("surprise", 0) * 70) +
+                        (scores.get("neutral", 0) * 50) +
+                        (scores.get("fear", 0) * 30) +
+                        (scores.get("sad", 0) * 20) +
+                        (scores.get("angry", 0) * 10) +
+                        (scores.get("disgust", 0) * 5)
+                    )
             except:
                 vibe_score = r.confidence * 100
         else:
@@ -93,43 +102,37 @@ def analyze_trend(user_id: int, db: Session, year: int = None) -> dict:
             "trend_direction": {
                 "type": "STRING", 
                 "enum": ["improving", "declining", "stable", "insufficient_data"]
+            },
+            "sad_risk": {
+                "type": "STRING",
+                "enum": ["low", "moderate", "high"]
             }
         },
-        "required": ["trend_summary", "trend_direction"]
+        "required": ["trend_summary", "trend_direction", "sad_risk"]
     }
 
     client = genai.Client() 
     
     system_prompt = (
-        """
-            In backend/services/trend_analysis.py, update the system prompt to this 
-            exact string, replacing the existing one:
-
-            "You are a wellness analyst reviewing a user's daily emotional vibe scores 
-            (0-100, where 100 is most positive). Your job is to detect significant gaps 
-            or sustained dips in the data only — do not comment on normal fluctuation. 
-            A significant gap is defined as a drop of 20 or more points that lasts 3 or 
-            more consecutive entries, or a prolonged period where scores remain below 40. 
-            If you detect such a pattern, report when it started and how long it lasted. 
-            Assess whether the pattern is consistent with Seasonal Affective Disorder (SAD) 
-            — look for dips that cluster in winter months (November through February). 
-            If no significant gaps exist, say so briefly in one sentence. 
-            Respond only in valid JSON with keys: trend_summary (string), 
-            trend_direction (one of: improving, declining, stable, insufficient_data), 
-            sad_risk (one of: low, moderate, high)."
-
-            Also update the analyze_trend function to extract and return the sad_risk 
-            field from the parsed JSON response alongside trend_summary and trend_direction.
-
-            Do not change anything else in the file.
-        """
+        "You are a wellness analyst reviewing a user's daily emotional vibe scores "
+        "(0-100, where 100 is most positive). Your job is to detect significant gaps "
+        "or sustained dips in the data only — do not comment on normal fluctuation. "
+        "A significant gap is defined as a drop of 20 or more points that lasts 3 or "
+        "more consecutive entries, or a prolonged period where scores remain below 40. "
+        "If you detect such a pattern, report when it started and how long it lasted. "
+        "Assess whether the pattern is consistent with Seasonal Affective Disorder (SAD) "
+        "— look for dips that cluster in winter months (November through February). "
+        "If no significant gaps exist, say so briefly in one sentence. "
+        "Respond only in valid JSON with keys: trend_summary (string), "
+        "trend_direction (one of: improving, declining, stable, insufficient_data), "
+        "sad_risk (one of: low, moderate, high)."
     )
 
     user_prompt = f"Here are my scores for the last {scores_analyzed} check-ins:\n\n{scores_context}"
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=user_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
@@ -146,13 +149,15 @@ def analyze_trend(user_id: int, db: Session, year: int = None) -> dict:
         return {
             "trend_summary": data.get("trend_summary", "No summary provided."),
             "trend_direction": data.get("trend_direction", "stable"),
+            "sad_risk": data.get("sad_risk", "low"),
             "scores_analyzed": scores_analyzed
         }
     
     except Exception as e:
-        print(f"Error calling Gemini API: {e}") # Log the actual error
+        print(f"Error calling Gemini API: {e}")
         return {
-            "trend_summary": f"We successfully processed your data, but encountered an error generating the summary: {str(e)[:100]}",
+            "trend_summary": f"We successfully processed your data, but encountered an error generating the summary.",
             "trend_direction": "stable",
+            "sad_risk": "low",
             "scores_analyzed": scores_analyzed
         }
