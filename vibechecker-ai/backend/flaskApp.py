@@ -19,7 +19,7 @@ from routes.checkin import checkin_routes
 from routes.history import history_routes
 from routes.trend import trend_routes
 from services.inference import run_inference
-from database.db import create_checkin, store_emotion_result, get_season, update_seasonal_summary
+from database.db import create_checkin, store_emotion_result, get_season, update_seasonal_summary, set_face_features
 from PIL import Image
 
 app = Flask(__name__)
@@ -81,14 +81,26 @@ def inference():
             model_version=result["model_version"],
         )
 
+        # Persist derived facial features
+        set_face_features(
+            checkin_id=checkin.checkin_id,
+            ear=result.get("ear"),
+            mar=result.get("mar"),
+            brow_raise=result.get("brow_raise"),
+            mouth_angle=result.get("mouth_angle"),
+        )
+
         # Update seasonal summary
         update_seasonal_summary(int(user_id), season, season_year)
 
         return jsonify({
             "checkin_id": checkin.checkin_id,
             "vibe_score": result.get("vibe_score"),
-            "dominant_emotion": result.get("emotion"),
-            "confidence": result.get("confidence")
+            "emotion": result.get("emotion"),
+            "dominant_emotion": result.get("dominant_emotion"),
+            "confidence": result.get("confidence"),
+            "scores": result.get("scores"),
+            "model_version": result.get("model_version")
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 400

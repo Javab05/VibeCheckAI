@@ -36,11 +36,13 @@ export default function HomeScreen() {
     requestPermissions();
   }, []);
 
-  // ── Helper: Get color based on score ────────────────────────
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return COLORS.moodGreat;
-    if (score >= 40) return COLORS.moodOkay;
-    return COLORS.moodDown;
+  // ── Helper: Get vibe level label based on score ───────────
+  const getVibeLevel = (score: number) => {
+    if (score >= 80) return 'GREAT';
+    if (score >= 60) return 'GOOD';
+    if (score >= 40) return 'OKAY';
+    if (score >= 20) return 'LOW';
+    return 'DOWN';
   };
 
   // ── Run ML scan ───────────────────────────────────────────
@@ -127,9 +129,18 @@ export default function HomeScreen() {
     setResult(null);
   };
 
+  // ── Helper: Get color based on score ────────────────────────
+  const getVibeColor = (score: number) => {
+    if (score >= 70) return COLORS.moodGreat;
+    if (score >= 40) return COLORS.moodOkay;
+    return COLORS.moodDown;
+  };
+
   // ── Result view ───────────────────────────────────────────
   if (scanState === 'done' && result) {
-    const scoreColor = getScoreColor(result.vibe_score);
+    const scoreColor = getVibeColor(result.vibe_score);
+    const vibeLevel = getVibeLevel(result.vibe_score);
+
     return (
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.resultScroll} showsVerticalScrollIndicator={false}>
@@ -154,8 +165,8 @@ export default function HomeScreen() {
                 <Text style={styles.scoreMax}>/100</Text>
               </View>
             </View>
-            <Text style={[styles.scoreLevel, { color: scoreColor }]}>
-              {result.dominant_emotion.toUpperCase()}
+            <Text style={[styles.scoreLevel, {color: scoreColor}]}>
+              {vibeLevel}
             </Text>
             <Text style={styles.scoreConf}>Model confidence: {result.confidence}%</Text>
 

@@ -74,21 +74,36 @@ def analyze_trend(user_id: int, db: Session, year: int = None) -> dict:
                 vibe_score = scores.get("vibe_score")
                 
                 if vibe_score is None:
-                    # Comprehensive weighted vibe score:
-                    # happy:100, surprise:70, neutral:50, fear:30, sad:20, angry:10, disgust:5
-                    vibe_score = (
-                        (scores.get("happy", 0) * 100) +
-                        (scores.get("surprise", 0) * 70) +
-                        (scores.get("neutral", 0) * 50) +
-                        (scores.get("fear", 0) * 30) +
-                        (scores.get("sad", 0) * 20) +
-                        (scores.get("angry", 0) * 10) +
-                        (scores.get("disgust", 0) * 5)
-                    )
+                    # Implement sharpening logic for fallback recalculation
+                    # order: angry, disgust, fear, happy, neutral, sad, surprise
+                    emotion_order = ["angry", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
+                    weights = [30, 20, 45, 100, 65, 35, 80]
+                    
+                    probs = [scores.get(emo, 0) for emo in emotion_order]
+                    # Sharpening (T=2)
+                    sharpened = [p**2 for p in probs]
+                    total = sum(sharpened) + 1e-9
+                    sharpened = [s/total for s in sharpened]
+                    
+                    vibe_score = sum(s * w for s, w in zip(sharpened, weights))
             except:
-                vibe_score = r.confidence * 100
+                # Fallback to confidence-based if parsing fails
+                emotion_weights = {
+                    "happy": 100, "surprise": 80, "neutral": 65, 
+                    "fear": 45, "sad": 35, "angry": 30, "disgust": 20
+                }
+                weight = emotion_weights.get(r.predicted_emotion, 50)
+                # For a single predicted emotion, we can treat its "sharpened" weight 
+                # as dominant based on confidence
+                vibe_score = (r.confidence * weight + (1 - r.confidence) * 65)
         else:
-            vibe_score = r.confidence * 100
+            # Similar fallback if no scores_json at all
+            emotion_weights = {
+                "happy": 100, "surprise": 80, "neutral": 65, 
+                "fear": 45, "sad": 35, "angry": 30, "disgust": 20
+            }
+            weight = emotion_weights.get(r.predicted_emotion, 50)
+            vibe_score = (r.confidence * weight + (1 - r.confidence) * 65)
             
         formatted_scores.append(f"{date_str}: {round(vibe_score, 1)}")
     

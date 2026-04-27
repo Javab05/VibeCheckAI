@@ -84,6 +84,7 @@ def upload_checkin():
     return jsonify({
         "checkin_id": checkin.checkin_id,
         "emotion": result["emotion"],
+        "dominant_emotion": result["dominant_emotion"],
         "confidence": result["confidence"],
         "scores": result["scores"],
         "model_version": result["model_version"],
