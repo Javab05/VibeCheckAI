@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
-import { TrendInsightCard } from '../../components/TrendInsightCard';
 import VibeGraph from '../../src/components/VibeGraph';
 
 const { width } = Dimensions.get('window');
@@ -23,7 +22,6 @@ export default function DashboardScreen() {
                 </View>
 
                 <View style={styles.body}>
-                    <TrendInsightCard />
                     <VibeGraph />
 
                     <TouchableOpacity

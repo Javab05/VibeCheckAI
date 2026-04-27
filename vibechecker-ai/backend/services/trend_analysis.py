@@ -101,8 +101,28 @@ def analyze_trend(user_id: int, db: Session, year: int = None) -> dict:
     client = genai.Client() 
     
     system_prompt = (
-        "You are a supportive wellness analyst. Analyze the following user vibe scores (0-100). "
-        "Identify any dips, divots, streaks, or the overall trend direction."
+        """
+            In backend/services/trend_analysis.py, update the system prompt to this 
+            exact string, replacing the existing one:
+
+            "You are a wellness analyst reviewing a user's daily emotional vibe scores 
+            (0-100, where 100 is most positive). Your job is to detect significant gaps 
+            or sustained dips in the data only — do not comment on normal fluctuation. 
+            A significant gap is defined as a drop of 20 or more points that lasts 3 or 
+            more consecutive entries, or a prolonged period where scores remain below 40. 
+            If you detect such a pattern, report when it started and how long it lasted. 
+            Assess whether the pattern is consistent with Seasonal Affective Disorder (SAD) 
+            — look for dips that cluster in winter months (November through February). 
+            If no significant gaps exist, say so briefly in one sentence. 
+            Respond only in valid JSON with keys: trend_summary (string), 
+            trend_direction (one of: improving, declining, stable, insufficient_data), 
+            sad_risk (one of: low, moderate, high)."
+
+            Also update the analyze_trend function to extract and return the sad_risk 
+            field from the parsed JSON response alongside trend_summary and trend_direction.
+
+            Do not change anything else in the file.
+        """
     )
 
     user_prompt = f"Here are my scores for the last {scores_analyzed} check-ins:\n\n{scores_context}"

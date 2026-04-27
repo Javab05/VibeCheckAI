@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../constants/api';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
+import { TrendInsightCard } from '../../components/TrendInsightCard';
 import VibeGraph from '../../src/components/VibeGraph';
 
 type CheckinEntry = {
@@ -164,6 +165,9 @@ export default function HistoryScreen() {
             </Text>
           </View>
         )}
+
+        {/* Trend Insights */}
+        <TrendInsightCard />
 
         {/* Vibe trend component */}
         {checkins.length > 0 && (
