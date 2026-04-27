@@ -1,6 +1,10 @@
 import sys, os
 import uuid
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add vibechecker-ai to path so database and ml folders can be found
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,6 +17,7 @@ from flask_cors import CORS
 from routes.auth import auth_routes
 from routes.checkin import checkin_routes
 from routes.history import history_routes
+from routes.trend import trend_routes
 from services.inference import run_inference
 from database.db import create_checkin, store_emotion_result, get_season, update_seasonal_summary
 from PIL import Image
@@ -25,6 +30,7 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'storage', 'images
 app.register_blueprint(auth_routes, url_prefix="/auth")
 app.register_blueprint(checkin_routes, url_prefix="/checkin")
 app.register_blueprint(history_routes, url_prefix="/history")
+app.register_blueprint(trend_routes, url_prefix="/trend")
 
 @app.route("/inference", methods=["POST"])
 def inference():

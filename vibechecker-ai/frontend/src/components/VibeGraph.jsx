@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { 
   LineChart, 
   Line, 
@@ -11,6 +11,7 @@ import {
   ReferenceLine,
   Cell
 } from 'recharts';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../constants/api';
 import { COLORS, SPACING, RADIUS, FONTS } from '../../constants/theme';
@@ -37,10 +38,21 @@ const getVibeColor = (score) => {
   return COLORS.moodDown;
 };
 
+const getTrendColor = (direction) => {
+  switch (direction) {
+    case 'improving': return COLORS.moodGreat;
+    case 'declining': return COLORS.moodDown;
+    case 'stable': return COLORS.textSecondary;
+    default: return COLORS.textMuted;
+  }
+};
+
 export default function VibeGraph({ scores: initialScores }) {
   const [scores, setScores] = useState(initialScores || []);
   const [loading, setLoading] = useState(!initialScores);
   const [error, setError] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
     if (!initialScores) {
@@ -91,6 +103,40 @@ export default function VibeGraph({ scores: initialScores }) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+const fetchYearSummary = async () => {
+    setSummaryLoading(true);
+    try {
+      const userId = await AsyncStorage.getItem('user_id');
+      if (!userId) return;
+      
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`${API_URL}/trend/${userId}?year=${currentYear}`);
+      
+      // 1. Catch the 404 (No Data)
+      if (response.status === 404) {
+        setSummary({
+          trend_direction: "insufficient_data",
+          trend_summary: "Not enough data for this year yet!",
+          scores_analyzed: 0
+        });
+        
+        return; // Exit the function successfully
+      }
+
+      // 2. Catch actual server crashes (500s)
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      
+      // 3. Otherwise success
+      const data = await response.json();
+      setSummary(data);
+      
+    } catch (err) {
+      console.error('Error fetching year summary:', err);
+    } finally {
+      setSummaryLoading(false);
     }
   };
 
@@ -164,6 +210,44 @@ export default function VibeGraph({ scores: initialScores }) {
           </LineChart>
         </ResponsiveContainer>
       </View>
+
+      <TouchableOpacity 
+        style={styles.summaryButton} 
+        onPress={fetchYearSummary}
+        disabled={summaryLoading}
+        activeOpacity={0.7}
+      >
+        {summaryLoading ? (
+          <ActivityIndicator size="small" color={COLORS.white} />
+        ) : (
+          <View style={styles.buttonContent}>
+            <Ionicons name="calendar-outline" size={16} color={COLORS.white} />
+            <Text style={styles.summaryButtonText}>Year Summary</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {summary && (
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryHeader}>
+            <Text style={styles.summaryTitle}>Annual Outlook</Text>
+            {summary.trend_direction !== 'insufficient_data' && (
+              <View style={[
+                styles.badge, 
+                { 
+                  backgroundColor: getTrendColor(summary.trend_direction) + '20', 
+                  borderColor: getTrendColor(summary.trend_direction) 
+                }
+              ]}>
+                <Text style={[styles.badgeText, { color: getTrendColor(summary.trend_direction) }]}>
+                  {summary.trend_direction}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.summaryText}>{summary.trend_summary}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -223,5 +307,62 @@ const styles = StyleSheet.create({
   emptyText: {
     color: COLORS.textSecondary,
     fontSize: FONTS.sizes.sm,
-  }
+  },
+  summaryButton: {
+    backgroundColor: COLORS.amber,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.md,
+    height: 40,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  summaryButtonText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  summaryCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  summaryTitle: {
+    color: COLORS.amber,
+    fontSize: FONTS.sizes.xs,
+    fontWeight: FONTS.weights.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  summaryText: {
+    color: COLORS.textPrimary,
+    fontSize: FONTS.sizes.sm,
+    lineHeight: 20,
+  },
+  badge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: FONTS.weights.bold,
+    textTransform: 'uppercase',
+  },
 });
